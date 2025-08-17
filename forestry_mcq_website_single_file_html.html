@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forestry MCQ Quiz</title>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --panel:#111827;       /* gray-900 */
+      --muted:#94a3b8;       /* slate-400 */
+      --text:#e5e7eb;        /* gray-200 */
+      --brand:#22c55e;       /* green-500 */
+      --brand-2:#3b82f6;     /* blue-500 */
+      --danger:#ef4444;      /* red-500 */
+      --border:#1f2937;      /* gray-800 */
+      --card:#0b1222;        /* custom */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--bg),#020617);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:blur(8px);
+      background:rgba(2,6,23,.7); border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1000px; margin:0 auto; padding:16px;}
+    h1{margin:0; font-weight:800; letter-spacing:.3px; display:flex;align-items:center;gap:10px}
+    .badge{font-size:12px;background:linear-gradient(90deg,var(--brand),var(--brand-2)); color:black; padding:4px 8px; border-radius:999px}
+
+    .panel{background:linear-gradient(180deg,#0b1222,#0a1020); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .grid{display:grid; gap:16px}
+    @media(min-width:860px){ .grid{grid-template-columns:1.2fr .8fr} }
+
+    .controls{display:flex; flex-wrap:wrap; gap:10px}
+    .btn{appearance:none; border:1px solid var(--border); background:#0b1222; color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand-2)); color:#001b0a; border:none; font-weight:700}
+    .btn.secondary{background:#0b1222}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+
+    .bar{height:10px; background:#0d1326; border:1px solid var(--border); border-radius:999px; overflow:hidden}
+    .bar>span{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+
+    .qcard{background:linear-gradient(180deg,#0d1224,#0a0f1f); border:1px solid var(--border); border-radius:16px; padding:16px}
+    .qtext{font-size:18px; line-height:1.4}
+    .opts{display:grid; gap:8px; margin-top:10px}
+    .opt{display:flex; align-items:center; gap:10px; background:#0a0f1f; border:1px solid var(--border); padding:10px 12px; border-radius:12px; cursor:pointer}
+    .opt input{accent-color:#22c55e}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .meta{font-size:13px; color:var(--muted)}
+
+    .pill{font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; color:var(--muted)}
+
+    .footer{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
+
+    details{border:1px dashed var(--border); padding:12px; border-radius:12px}
+    summary{cursor:pointer}
+
+    input[type="number"], select{background:#0b1222; color:var(--text); border:1px solid var(--border); padding:8px 10px; border-radius:10px}
+
+    .table{width:100%; border-collapse:collapse}
+    .table th,.table td{border-bottom:1px solid var(--border); padding:8px 6px; text-align:left; font-size:13px}
+    .muted{color:var(--muted)}
+
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <h1>🌳 Forestry MCQ <span class="badge">Silviculture</span></h1>
+      <div class="controls">
+        <label class="btn secondary">Load Questions JSON
+          <input id="fileJson" type="file" accept="application/json" hidden>
+        </label>
+        <label class="btn secondary">Load Questions CSV
+          <input id="fileCsv" type="file" accept=".csv,text/csv" hidden>
+        </label>
+        <label class="btn secondary">Load Answer Key CSV
+          <input id="fileAns" type="file" accept=".csv,text/csv" hidden>
+        </label>
+        <button id="btnExport" class="btn ghost" title="Export merged dataset as JSON">Export JSON</button>
+        <button id="btnReset" class="btn ghost" title="Clear current progress">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap grid" style="margin-top:16px">
+    <!-- LEFT: Quiz -->
+    <section class="panel">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <span class="pill" id="pillCount">0 / 0</span>
+          <span class="pill" id="pillScore">Score: 0</span>
+          <span class="pill" id="pillMode">Mode: Practice</span>
+        </div>
+        <div class="row">
+          <label class="row">Items: <input id="limit" type="number" style="width:90px" min="1" value="25"></label>
+          <label class="row">Start at: <input id="startAt" type="number" style="width:90px" min="1" value="1"></label>
+          <label class="row">Shuffle: <input id="shuffle" type="checkbox" checked></label>
+          <select id="mode">
+            <option value="practice">Practice (instant check)</option>
+            <option value="exam">Exam (score at end)</option>
+            <option value="review">Review (show answers)</option>
+          </select>
+          <button id="btnStart" class="btn primary">Start</button>
+        </div>
+      </div>
+
+      <div style="margin:12px 0">
+        <div class="bar"><span id="bar" style="width:0%"></span></div>
+        <div class="meta" id="progressMeta" style="margin-top:6px">Load questions to begin.</div>
+      </div>
+
+      <div id="quizArea" class="qcard hidden"></div>
+
+      <div class="footer" style="margin-top:12px">
+        <div class="row meta">
+          <span id="status"></span>
+        </div>
+        <div class="row">
+          <button id="prev" class="btn" disabled>◀ Prev</button>
+          <button id="check" class="btn" disabled>Check</button>
+          <button id="next" class="btn" disabled>Next ▶</button>
+          <button id="finish" class="btn" disabled>Finish</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Dataset & Help -->
+    <aside class="panel">
+      <h3 style="margin-top:0">Dataset</h3>
+      <table class="table" id="dsTable"></table>
+
+      <details style="margin-top:16px">
+        <summary><strong>How to prepare your files</strong></summary>
+        <div class="meta" style="margin-top:8px">
+          <p><strong>Option A — JSON</strong> (recommended): an array of objects with fields <code>id</code>, <code>question</code>, <code>options</code> (array of 4), <code>answer</code> ("a"|"b"|"c"|"d").</p>
+<pre style="white-space:pre-wrap">[
+  {"id":1,"question":"…","options":["opt A","opt B","opt C","opt D"],"answer":"d"},
+  {"id":2,"question":"…","options":["opt A","opt B","opt C","opt D"],"answer":"c"}
+]</pre>
+          <p><strong>Option B — CSV</strong> for Questions: columns <em>id,question,a,b,c,d</em>.</p>
+          <p><strong>Option C — CSV</strong> for Answer Key: columns <em>id,answer</em> where answer is <em>a/b/c/d</em>.</p>
+          <p>You can copy values from your answer sheet (Q → letter) into the Answer Key CSV.</p>
+        </div>
+      </details>
+
+      <details style="margin-top:12px" open>
+        <summary><strong>Included sample (you can replace)</strong></summary>
+        <ol class="muted" style="margin-top:8px">
+          <li>Q1. In a forest, before the commencement of regeneration felling… → <em>answer: d</em></li>
+          <li>Q2. Plantation in an area from which vegetation has long been absent… → <em>answer: c</em></li>
+          <li>Q3. Light-demanding species regenerate best under… (sample) → <em>answer: b</em></li>
+        </ol>
+      </details>
+    </aside>
+  </main>
+
+  <script>
+    // ===== Utility helpers =====
+    const $ = (s)=>document.querySelector(s);
+    const dsTable = $('#dsTable');
+
+    function parseCSV(text){
+      // very lightweight CSV parser (no quoted commas). For complex data, use a proper parser.
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      const head = lines.shift().split(',').map(h=>h.trim().toLowerCase());
+      return lines.map(line=>{
+        const cells = line.split(',');
+        const obj = {};
+        head.forEach((h,i)=>obj[h]= (cells[i]??'').trim());
+        return obj;
+      });
+    }
+
+    function toLetterIndex(letter){ return {a:0,b:1,c:2,d:3}[String(letter).trim().toLowerCase()]; }
+    function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+    function shuffleInPlace(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+    // ===== App state =====
+    let fullDataset = [];// all items loaded
+    let run = { items:[], idx:0, mode:'practice', score:0, checked:false };
+
+    // Minimal starter dataset (replace by loading your files)
+    fullDataset = [
+      { id:1, question:"In a forest, before the commencement of regeneration felling, the naturally established seedlings, samplings and poles of over-wood is known as:", options:["Advance growth","Advance reproduction","Advance regeneration","All of the above"], answer:"d" },
+      { id:2, question:"Plantation in an area from which vegetation has long been absent should technically be called as:", options:["Rehabilitation","Reforestation","Afforestation","All of the above"], answer:"c" },
+      { id:3, question:"Light-demanding species regenerate best under:", options:["Closed canopy","Partial shade","Full light","Deep shade"], answer:"c" }
+    ];
+    refreshDatasetTable();
+    updateMeta();
+
+    // ===== File loaders =====
+    $('#fileJson').addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const text = await file.text();
+      try{
+        const data = JSON.parse(text);
+        if(!Array.isArray(data)) throw new Error('JSON must be an array');
+        const valid = data.filter(v=> v && typeof v.id!== 'undefined' && v.question && Array.isArray(v.options) && v.options.length===4 && v.answer);
+        if(valid.length!==data.length) alert('Some items were skipped due to missing fields.');
+        fullDataset = valid.map(x=> ({ id:Number(x.id), question:String(x.question), options:[...x.options].slice(0,4).map(String), answer:String(x.answer).toLowerCase() }));
+        announce(`Loaded ${fullDataset.length} questions from JSON.`);
+        refreshDatasetTable(); updateMeta();
+      }catch(err){ alert('Failed to parse JSON: '+err.message); }
+      e.target.value = '';
+    });
+
+    $('#fileCsv').addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const text = await file.text();
+      const rows = parseCSV(text);
+      const items = rows.map(r=>({
+        id: Number(r.id),
+        question: r.question,
+        options:[r.a,r.b,r.c,r.d].map(x=> x??''),
+        answer: (r.answer||'').toLowerCase()
+      }));
+      // If answer column missing, leave blank to be merged later
+      fullDataset = items.filter(v=> v.id && v.question && v.options.every(Boolean));
+      announce(`Loaded ${fullDataset.length} questions from CSV.`);
+      refreshDatasetTable(); updateMeta();
+      e.target.value = '';
+    });
+
+    $('#fileAns').addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const text = await file.text();
+      const rows = parseCSV(text);
+      let merged = 0;
+      const key = new Map(rows.map(r=> [Number(r.id), String(r.answer||r.correct||'').toLowerCase()]));
+      fullDataset.forEach(q=>{ if(key.has(q.id)){ q.answer = key.get(q.id); merged++; }});
+      announce(`Merged ${merged} answers from Answer Key CSV.`);
+      refreshDatasetTable(); updateMeta();
+      e.target.value = '';
+    });
+
+    $('#btnExport').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(fullDataset,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), {href:url, download:'questions.json'});
+      a.click(); URL.revokeObjectURL(url);
+    });
+
+    $('#btnReset').addEventListener('click', ()=>{ run = {items:[], idx:0, mode:'practice', score:0, checked:false}; updateMeta(); renderQuiz(); setProgress(0); announce('Reset.'); });
+
+    // ===== Start / Controls =====
+    $('#btnStart').addEventListener('click', ()=>{
+      const limit = clamp(parseInt($('#limit').value||'25',10), 1, fullDataset.length||1);
+      const startAt = clamp(parseInt($('#startAt').value||'1',10), 1, Number.MAX_SAFE_INTEGER);
+      const subset = fullDataset.filter(q=> q.id>=startAt).slice(0, limit);
+      const items = $('#shuffle').checked ? shuffleInPlace([...subset]) : subset;
+      run = { items, idx:0, mode: $('#mode').value, score:0, checked:false };
+      $('#quizArea').classList.remove('hidden');
+      $('#prev').disabled = true; $('#next').disabled = items.length<=1; $('#check').disabled = (run.mode!=='practice'); $('#finish').disabled = false;
+      updateMeta(); renderQuiz(); setProgress(0);
+    });
+
+    $('#prev').addEventListener('click', ()=>{ if(run.idx>0){ run.idx--; run.checked=false; renderQuiz(); updateMeta(); } });
+    $('#next').addEventListener('click', ()=>{ if(run.idx<run.items.length-1){ run.idx++; run.checked=false; renderQuiz(); updateMeta(); } });
+
+    $('#check').addEventListener('click', ()=>{
+      if(run.mode!=='practice') return;
+      const q = run.items[run.idx];
+      const chosen = getChosen();
+      if(!chosen){ announce('Please select an option.'); return; }
+      const correct = chosen === q.answer;
+      run.checked = true;
+      if(correct){ run.score++; announce('✅ Correct'); } else { announce(`❌ Wrong — correct is ${q.answer.toUpperCase()}`); }
+      highlightAnswers(q.answer, chosen);
+      setProgress((run.idx+1)/run.items.length*100);
+    });
+
+    $('#finish').addEventListener('click', ()=>{
+      const total = run.items.length;
+      if(run.mode==='exam'){
+        // evaluate all
+        let score = 0;
+        for(let i=0;i<total;i++){
+          const chosen = run.items[i]._chosen; if(chosen && chosen===run.items[i].answer) score++;
+        }
+        run.score = score;
+      }
+      announce(`🎉 Completed — Score: ${run.score} / ${total}`);
+      setProgress(100);
+      $('#prev').disabled = $('#next').disabled = $('#check').disabled = true;
+    });
+
+    function renderQuiz(){
+      const q = run.items[run.idx];
+      if(!q){ $('#quizArea').innerHTML = '<div class="meta">Load questions to begin.</div>'; return; }
+      const letters = ['a','b','c','d'];
+      const html = `
+        <div class="meta" style="margin-bottom:6px">Question ID: ${q.id}</div>
+        <div class="qtext">${run.idx+1}. ${q.question}</div>
+        <div class="opts">
+          ${letters.map((L,i)=>{
+            const checked = q._chosen===L ? 'checked' : '';
+            return `<label class="opt"><input type="radio" name="choice" value="${L}" ${checked}> <strong>(${L.toUpperCase()})</strong>&nbsp; ${q.options[i]||''}</label>`;
+          }).join('')}
+        </div>`;
+      $('#quizArea').innerHTML = html;
+
+      // behavior per mode
+      const mode = run.mode;
+      if(mode==='review'){
+        highlightAnswers(q.answer, q._chosen);
+      }
+
+      // listeners
+      document.querySelectorAll('input[name="choice"]').forEach(el=>{
+        el.addEventListener('change', ()=>{ q._chosen = el.value; if(mode==='exam'){ /* no instant check */ } });
+      });
+
+      $('#prev').disabled = run.idx===0;
+      $('#next').disabled = run.idx>=run.items.length-1;
+      $('#check').disabled = (mode!=='practice');
+    }
+
+    function getChosen(){ const el = document.querySelector('input[name="choice"]:checked'); return el? el.value : null; }
+
+    function highlightAnswers(correct, chosen){
+      document.querySelectorAll('.opt').forEach(opt=>{
+        const v = opt.querySelector('input').value;
+        opt.style.borderColor = (v===correct) ? 'rgba(34,197,94,.9)' : (v===chosen? 'rgba(239,68,68,.9)':'var(--border)');
+        opt.style.background = (v===correct) ? 'linear-gradient(90deg,rgba(34,197,94,.12),transparent)' : (v===chosen? 'linear-gradient(90deg,rgba(239,68,68,.12),transparent)':'#0a0f1f');
+      });
+      updateMeta();
+    }
+
+    function refreshDatasetTable(){
+      const head = `<tr><th>ID</th><th>Question</th><th>(A)</th><th>(B)</th><th>(C)</th><th>(D)</th><th>Ans</th></tr>`;
+      const rows = fullDataset.slice(0,50).map(r=>`<tr><td>${r.id}</td><td>${escapeHtml(r.question)}</td><td>${escapeHtml(r.options?.[0]||'')}</td><td>${escapeHtml(r.options?.[1]||'')}</td><td>${escapeHtml(r.options?.[2]||'')}</td><td>${escapeHtml(r.options?.[3]||'')}</td><td>${(r.answer||'').toUpperCase()}</td></tr>`).join('');
+      const more = fullDataset.length>50 ? `<tr><td colspan="7" class="muted">…and ${fullDataset.length-50} more</td></tr>` : '';
+      dsTable.innerHTML = head + rows + more;
+    }
+
+    function updateMeta(){
+      $('#pillCount').textContent = `${run.idx+1} / ${run.items.length||0}`;
+      $('#pillScore').textContent = `Score: ${run.score}`;
+      $('#pillMode').textContent = `Mode: ${run.mode.charAt(0).toUpperCase()+run.mode.slice(1)}`;
+      const q = run.items[run.idx];
+      $('#status').textContent = q? `ID ${q.id} • Choose (A–D)` : '';
+      $('#progressMeta').textContent = fullDataset.length? `${fullDataset.length} questions loaded. Configure and press Start.` : 'Load questions to begin.';
+    }
+
+    function setProgress(pct){ $('#bar').style.width = `${pct}%`; }
+
+    function announce(msg){
+      const el = $('#status'); el.textContent = msg; el.animate([{opacity:0.2},{opacity:1}],{duration:300});
+    }
+
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+  </script>
+</body>
+</html>
